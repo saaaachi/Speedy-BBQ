@@ -6,38 +6,102 @@
     <title>Speedy BBQ - 第25弾</title>
     <style>
         body { margin: 0; overflow: hidden; background: #3e2723; font-family: sans-serif; touch-action: none; }
-        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
-        #ad-top { top: 0; } #ad-bottom { bottom: 0; }
+        
+        /* 広告エリア：上下150px */
+        #ad-top, #ad-bottom { 
+            position: fixed; left: 0; width: 100%; height: 150px; 
+            background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; 
+        }
+        #ad-top { top: 0; }
+        #ad-bottom { bottom: 0; }
         iframe { border: none; width: 100%; height: 150px; }
-        #game-area { margin-top: 150px; height: calc(100vh - 300px); position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; padding: 10px; box-sizing: border-box; }
-        .meat { width: 80px; height: 80px; margin: 10px; background: #ff8a80; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; cursor: pointer; border: 4px solid #5d4037; transition: background 0.2s; position: relative; }
-        #ui { position: absolute; top: 160px; left: 0; width: 100%; text-align: center; color: white; font-size: 24px; font-weight: bold; z-index: 10; pointer-events: none; }
-        #startScreen { position: absolute; top: 150px; left: 0; width: 100%; height: calc(100vh - 300px); background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; color: white; }
-        #goButton { padding: 15px 45px; font-size: 24px; background: #e64a19; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; }
+
+        /* ゲームエリア：3x3のグリッド */
+        #game-area { 
+            margin-top: 150px; 
+            height: calc(100vh - 300px); 
+            position: relative; 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-content: center; 
+            padding: 10px; 
+            box-sizing: border-box; 
+        }
+
+        .meat { 
+            width: 90px; height: 90px; 
+            margin: 8px; 
+            background: #ff8a80; 
+            border-radius: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 45px; 
+            cursor: pointer; 
+            border: 5px solid #5d4037; 
+            transition: transform 0.1s, background 0.2s; 
+            position: relative;
+            box-shadow: 0 4px 0 #211513;
+        }
+
+        .meat:active { transform: scale(0.9); }
+
+        #ui { 
+            position: absolute; top: 160px; left: 0; width: 100%; 
+            text-align: center; color: white; font-size: 28px; 
+            font-weight: bold; z-index: 10; pointer-events: none; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        #startScreen { 
+            position: absolute; top: 150px; left: 0; width: 100%; 
+            height: calc(100vh - 300px); 
+            background: rgba(0,0,0,0.9); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 50; color: white;
+        }
+
+        #goButton { 
+            padding: 18px 50px; font-size: 26px; 
+            background: #e64a19; border: none; border-radius: 50px; 
+            color: white; font-weight: bold; cursor: pointer; 
+            box-shadow: 0 5px #bf360c;
+        }
     </style>
 </head>
 <body>
-    <div id="ad-top"><iframe src="ad.html"></iframe></div>
-    <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
+    <div id="ad-top"><iframe id="frame-top" src="ad.html"></iframe></div>
+    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html"></iframe></div>
 
     <div id="ui">SCORE: 0</div>
-    <div id="game-area" id="grid"></div>
+    <div id="game-area"></div>
 
     <div id="startScreen">
-        <h1 style="color:#ff5722;">SPEEDY BBQ</h1>
-        <p>お肉が茶色くなったらタップ！<br>焦げるとゲームオーバー🥩🔥</p>
+        <h1 style="color:#ff5722; margin-bottom:10px;">SPEEDY BBQ</h1>
+        <p style="text-align:center; line-height:1.6; margin-bottom:25px;">
+            生肉（🥩）が焼けて<br>美味しそう（🍖）になったらタップ！<br>
+            焦げ（💣）たらゲームオーバーだ！
+        </p>
         <button id="goButton">焼きはじめる！</button>
+        <p style="margin-top:15px; color:#ffab91;">BEST: <span id="best-ui">0</span></p>
     </div>
 
     <script>
         const grid = document.getElementById("game-area");
         const ui = document.getElementById("ui");
-        let score = 0, gameActive = false;
-        let meatCount = 9; // 3x3の網
+        const bestUi = document.getElementById("best-ui");
+        let score = 0;
+        let bestScore = localStorage.getItem("bbq_best") || 0;
+        let gameActive = false;
+        const meatCount = 9; 
+        bestUi.innerText = bestScore;
 
         document.getElementById("goButton").onclick = () => {
             document.getElementById("startScreen").style.display = "none";
-            gameActive = true; score = 0; ui.innerText = "SCORE: 0";
+            gameActive = true;
+            score = 0;
+            ui.innerText = "SCORE: 0";
             initGrid();
         };
 
@@ -46,7 +110,6 @@
             for(let i=0; i<meatCount; i++) {
                 const m = document.createElement("div");
                 m.className = "meat";
-                m.innerText = "🥩";
                 m.onclick = () => cook(m);
                 grid.appendChild(m);
                 startCooking(m);
@@ -55,21 +118,30 @@
 
         function startCooking(m) {
             if(!gameActive) return;
-            m.state = "raw"; // raw -> medium -> burnt
+            m.state = "raw"; 
+            m.innerText = "🥩"; 
             m.style.background = "#ff8a80"; // 生色
-            let time = 1500 + Math.random() * 2000 - (score * 10);
+            
+            // 生から食べごろになるまでの時間（2秒〜4秒の間）
+            let timeToMedium = 2000 + Math.random() * 2000 - Math.min(score * 5, 1000);
             
             m.timer = setTimeout(() => {
                 if(!gameActive) return;
                 m.state = "medium";
-                m.style.background = "#8d6e63"; // 食べごろ色
+                m.innerText = "🍖"; // 食べごろ！
+                m.style.background = "#8d6e63"; // 茶色
+
+                // 食べごろ（茶色）を維持する時間（2秒から始まり、徐々に短くなるが最低1秒は確保）
+                let mediumDuration = Math.max(1000, 2000 - (score * 10));
+
                 m.timer = setTimeout(() => {
                     if(!gameActive) return;
                     m.state = "burnt";
-                    m.style.background = "#212121"; // 焦げ色
-                    gameOver("お肉が焦げちゃった！");
-                }, 1000 - Math.min(score * 5, 500));
-            }, time);
+                    m.innerText = "💣"; // 焦げた！
+                    m.style.background = "#212121"; 
+                    gameOver("お肉が焦げちゃった！🔥");
+                }, mediumDuration);
+            }, timeToMedium);
         }
 
         function cook(m) {
@@ -78,23 +150,36 @@
                 score++;
                 ui.innerText = "SCORE: " + score;
                 clearTimeout(m.timer);
-                m.innerText = "😋";
+                m.innerText = "😋"; // 食べた！
                 m.style.background = "#3e2723";
-                setTimeout(() => { if(gameActive) { m.innerText = "🥩"; startCooking(m); } }, 500);
+                // 0.4秒後に新しい生肉をセット
+                setTimeout(() => { 
+                    if(gameActive) startCooking(m); 
+                }, 400);
             } else if(m.state === "raw") {
-                gameOver("まだ生だよ！");
+                gameOver("まだ生だよ！🤮");
             }
         }
 
         function gameOver(msg) {
             gameActive = false;
+            if(score > bestScore) {
+                bestScore = score;
+                localStorage.setItem("bbq_best", bestScore);
+            }
             alert(msg + "\nSCORE: " + score);
             location.reload();
         }
 
+        // 🚀 30秒リフレッシュシステム
         setInterval(() => {
-            const fs = document.querySelectorAll('iframe');
-            fs.forEach(f => { const s = f.src; f.src = "about:blank"; setTimeout(() => f.src = s, 100); });
+            ["frame-top", "frame-bottom"].forEach(id => {
+                const f = document.getElementById(id);
+                if(f) {
+                    const s = f.src; f.src = "about:blank";
+                    setTimeout(() => f.src = s, 100);
+                }
+            });
         }, 30000);
     </script>
 </body>
