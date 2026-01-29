@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Speedy BBQ - 第25弾</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #3e2723; font-family: sans-serif; touch-action: none; }
+        * { box-sizing: border-box; }
+        body { margin: 0; overflow: hidden; background: #3e2723; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
         
-        /* 広告エリア：上下150px */
+        /* 上下広告エリア（ad.html） */
         #ad-top, #ad-bottom { 
             position: fixed; left: 0; width: 100%; height: 150px; 
             background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; 
@@ -16,89 +17,106 @@
         #ad-bottom { bottom: 0; }
         iframe { border: none; width: 100%; height: 150px; }
 
-        /* ゲームエリア：3x3のグリッド */
-        #game-area { 
-            margin-top: 150px; 
-            height: calc(100vh - 300px); 
-            position: relative; 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            align-content: center; 
-            padding: 10px; 
-            box-sizing: border-box; 
+        /* ゲームエリア：広告に挟まれた中央部分 */
+        #game-outer {
+            position: absolute; top: 150px; bottom: 150px; left: 0; right: 0;
+            background: #fff3e0; overflow: hidden; display: flex; flex-direction: column;
+        }
+
+        #ui { 
+            padding: 10px; text-align: center; color: #5d4037; font-size: 28px; 
+            font-weight: bold; z-index: 10; pointer-events: none; 
+            text-shadow: 1px 1px 0px white;
+        }
+
+        #game-grid { 
+            flex-grow: 1; display: flex; flex-wrap: wrap; 
+            justify-content: center; align-content: center; padding: 10px;
         }
 
         .meat { 
-            width: 90px; height: 90px; 
-            margin: 8px; 
-            background: #ff8a80; 
-            border-radius: 20px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 45px; 
-            cursor: pointer; 
-            border: 5px solid #5d4037; 
-            transition: transform 0.1s, background 0.2s; 
-            position: relative;
-            box-shadow: 0 4px 0 #211513;
+            width: 85px; height: 85px; margin: 6px; background: #ff8a80; 
+            border-radius: 20px; display: flex; align-items: center; justify-content: center; 
+            font-size: 40px; cursor: pointer; border: 4px solid #5d4037; 
+            transition: transform 0.1s; position: relative; box-shadow: 0 4px 0 #211513;
         }
-
         .meat:active { transform: scale(0.9); }
 
-        #ui { 
-            position: absolute; top: 160px; left: 0; width: 100%; 
-            text-align: center; color: white; font-size: 28px; 
-            font-weight: bold; z-index: 10; pointer-events: none; 
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        /* メニュー画面 */
+        #menuScreen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.92); display: flex; flex-direction: column; 
+            align-items: center; justify-content: flex-start; z-index: 50; 
+            color: white; padding-top: 15px;
         }
 
-        #startScreen { 
-            position: absolute; top: 150px; left: 0; width: 100%; 
-            height: calc(100vh - 300px); 
-            background: rgba(0,0,0,0.9); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            z-index: 50; color: white;
+        #ad-middle-container { 
+            width: 300px; height: 160px; background: #000; margin: 10px 0; 
+            display: none; justify-content: center; align-items: center; 
+            overflow: hidden; flex-shrink: 0;
         }
 
+        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 10px; }
         #goButton { 
-            padding: 18px 50px; font-size: 26px; 
-            background: #e64a19; border: none; border-radius: 50px; 
-            color: white; font-weight: bold; cursor: pointer; 
-            box-shadow: 0 5px #bf360c;
+            padding: 15px 0; font-size: 22px; background: #e64a19; border: none; 
+            border-radius: 50px; color: white; font-weight: bold; cursor: pointer; 
+            width: 240px; box-shadow: 0 5px #bf360c;
+        }
+        .link-btn {
+            padding: 12px 0; font-size: 14px; background: #9b59b6;
+            border: none; border-radius: 50px; color: white; font-weight: bold;
+            text-decoration: none; width: 240px; text-align: center;
+            box-shadow: 0 4px #8e44ad;
         }
     </style>
 </head>
 <body>
+
     <div id="ad-top"><iframe id="frame-top" src="ad.html"></iframe></div>
-    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html"></iframe></div>
 
-    <div id="ui">SCORE: 0</div>
-    <div id="game-area"></div>
+    <div id="game-outer">
+        <div id="ui">SCORE: 0</div>
+        <div id="game-grid"></div>
 
-    <div id="startScreen">
-        <h1 style="color:#ff5722; margin-bottom:10px;">SPEEDY BBQ</h1>
-        <p style="text-align:center; line-height:1.6; margin-bottom:25px;">
-            生肉（🥩）が焼けて<br>美味しそう（🍖）になったらタップ！<br>
-            焦げ（💣）たらゲームオーバーだ！
-        </p>
-        <button id="goButton">焼きはじめる！</button>
-        <p style="margin-top:15px; color:#ffab91;">BEST: <span id="best-ui">0</span></p>
+        <div id="menuScreen">
+            <h1 id="menuTitle" style="color:#ff5722; margin: 5px 0;">SPEEDY BBQ</h1>
+            <p id="menuDesc" style="text-align:center; line-height:1.4; font-size: 14px; margin: 5px 0;">
+                生肉（🥩）が焼けたらタップ！<br>焦げ（💣）たり生（🤮）だと終了！
+            </p>
+            
+            <p style="margin: 5px 0; color:#ffab91; font-weight: bold;">BEST: <span id="best-ui">0</span></p>
+
+            <div id="ad-middle-container">
+                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
+            </div>
+
+            <div class="btn-group">
+                <button id="goButton">焼きはじめる！</button>
+                <a href="https://saaaachi.github.io/Long-neck-run/" class="link-btn">他のゲームはこちら</a>
+            </div>
+        </div>
     </div>
 
+    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html"></iframe></div>
+
     <script>
-        const grid = document.getElementById("game-area");
+        const grid = document.getElementById("game-grid");
         const ui = document.getElementById("ui");
         const bestUi = document.getElementById("best-ui");
+        const menuScreen = document.getElementById("menuScreen");
+        const menuTitle = document.getElementById("menuTitle");
+        const menuDesc = document.getElementById("menuDesc");
+        const adMid = document.getElementById("ad-middle-container");
+        const goButton = document.getElementById("goButton");
+
         let score = 0;
         let bestScore = localStorage.getItem("bbq_best") || 0;
         let gameActive = false;
         const meatCount = 9; 
         bestUi.innerText = bestScore;
 
-        document.getElementById("goButton").onclick = () => {
-            document.getElementById("startScreen").style.display = "none";
+        goButton.onclick = () => {
+            menuScreen.style.display = "none";
             gameActive = true;
             score = 0;
             ui.innerText = "SCORE: 0";
@@ -120,24 +138,22 @@
             if(!gameActive) return;
             m.state = "raw"; 
             m.innerText = "🥩"; 
-            m.style.background = "#ff8a80"; // 生色
+            m.style.background = "#ff8a80";
             
-            // 生から食べごろになるまでの時間（2秒〜4秒の間）
-            let timeToMedium = 2000 + Math.random() * 2000 - Math.min(score * 5, 1000);
+            let timeToMedium = 1500 + Math.random() * 2000 - Math.min(score * 10, 1000);
             
             m.timer = setTimeout(() => {
                 if(!gameActive) return;
                 m.state = "medium";
-                m.innerText = "🍖"; // 食べごろ！
-                m.style.background = "#8d6e63"; // 茶色
+                m.innerText = "🍖";
+                m.style.background = "#8d6e63";
 
-                // 食べごろ（茶色）を維持する時間（2秒から始まり、徐々に短くなるが最低1秒は確保）
-                let mediumDuration = Math.max(1000, 2000 - (score * 10));
+                let mediumDuration = Math.max(700, 2000 - (score * 15));
 
                 m.timer = setTimeout(() => {
                     if(!gameActive) return;
                     m.state = "burnt";
-                    m.innerText = "💣"; // 焦げた！
+                    m.innerText = "💣";
                     m.style.background = "#212121"; 
                     gameOver("お肉が焦げちゃった！🔥");
                 }, mediumDuration);
@@ -150,12 +166,10 @@
                 score++;
                 ui.innerText = "SCORE: " + score;
                 clearTimeout(m.timer);
-                m.innerText = "😋"; // 食べた！
-                m.style.background = "#3e2723";
-                // 0.4秒後に新しい生肉をセット
-                setTimeout(() => { 
-                    if(gameActive) startCooking(m); 
-                }, 400);
+                m.state = "eaten";
+                m.innerText = "😋";
+                m.style.background = "#fff3e0";
+                setTimeout(() => { if(gameActive) startCooking(m); }, 300);
             } else if(m.state === "raw") {
                 gameOver("まだ生だよ！🤮");
             }
@@ -163,15 +177,24 @@
 
         function gameOver(msg) {
             gameActive = false;
+            // 全タイマー解除
+            const meats = document.querySelectorAll(".meat");
+            meats.forEach(m => clearTimeout(m.timer));
+
             if(score > bestScore) {
                 bestScore = score;
                 localStorage.setItem("bbq_best", bestScore);
+                bestUi.innerText = bestScore;
             }
-            alert(msg + "\nSCORE: " + score);
-            location.reload();
+
+            menuTitle.innerText = "GAME OVER";
+            menuTitle.style.color = "#ff5722";
+            menuDesc.innerText = msg + "\nSCORE: " + score;
+            goButton.innerText = "もう一度焼く！";
+            adMid.style.display = "flex"; 
+            menuScreen.style.display = "flex";
         }
 
-        // 🚀 30秒リフレッシュシステム
         setInterval(() => {
             ["frame-top", "frame-bottom"].forEach(id => {
                 const f = document.getElementById(id);
