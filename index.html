@@ -22,13 +22,11 @@
 
         .meat { width: 80px; height: 80px; margin: 5px; background: #ff8a80; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 36px; cursor: pointer; border: 4px solid #5d4037; position: relative; box-shadow: 0 4px 0 #211513; }
 
-        /* --- 修正のポイント：メニュー画面 --- */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.92); display: flex; flex-direction: column; 
             align-items: center; justify-content: flex-start; z-index: 50; 
             color: white; padding: 10px 0;
-            /* はみ出た場合にスクロールできるようにする */
             overflow-y: auto; 
             -webkit-overflow-scrolling: touch;
         }
@@ -98,11 +96,17 @@
         function startCooking(m) {
             if(!gameActive) return;
             m.state = "raw"; m.innerText = "🥩"; m.style.background = "#ff8a80";
-            let timeToMedium = 1500 + Math.random() * 2000 - Math.min(score * 10, 1000);
+            
+            // 【修正】生からちょうどいいお肉になる時間を +0.05〜0.1秒(50〜100ms) ランダム加算
+            let timeToMedium = (1500 + Math.random() * 2000 - Math.min(score * 10, 1000)) + (50 + Math.random() * 50);
+            
             m.timer = setTimeout(() => {
                 if(!gameActive) return;
                 m.state = "medium"; m.innerText = "🍖"; m.style.background = "#8d6e63";
-                let mediumDuration = Math.max(700, 2000 - (score * 15));
+                
+                // 【修正】ちょうどいいお肉から焦げるまでの時間を +1〜1.2秒(1000〜1200ms) ランダム加算
+                let mediumDuration = Math.max(700, 2000 - (score * 15)) + (1000 + Math.random() * 200);
+                
                 m.timer = setTimeout(() => {
                     if(!gameActive) return;
                     gameOver("焦げちゃった！🔥");
@@ -134,7 +138,6 @@
             goButton.innerText = "リトライ！";
             adMid.style.display = "flex"; 
             menuScreen.style.display = "flex";
-            // スクロール位置を一番上に戻す
             menuScreen.scrollTop = 0;
         }
 
