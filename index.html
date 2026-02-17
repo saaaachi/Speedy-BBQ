@@ -3,50 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Speedy BBQ - v25.6</title>
+    <title>Speedy BBQ - v25.7</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; overflow: hidden; background: #3e2723; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
+        
+        /* 上下広告枠 (150px) */
         #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
         #ad-top { top: 0; border-bottom: 1px solid #444; } 
         #ad-bottom { bottom: 0; border-top: 1px solid #444; }
-        iframe { border: none; width: 100%; height: 150px; }
-        #game-outer { position: absolute; top: 150px; bottom: 150px; left: 0; right: 0; background: #fff3e0; overflow: hidden; display: flex; flex-direction: column; }
+        iframe { border: none; width: 100%; height: 150px; background: #333; }
+
+        #game-outer {
+            position: absolute; top: 150px; bottom: 150px; left: 0; right: 0;
+            background: #fff3e0; overflow: hidden; display: flex; flex-direction: column;
+        }
+
         #ui { padding: 10px; text-align: center; color: #5d4037; font-size: 26px; font-weight: bold; z-index: 10; text-shadow: 1px 1px 0px white; }
         #game-grid { flex-grow: 1; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; padding: 5px; }
+
         .meat { width: 85px; height: 85px; margin: 6px; background: #ff8a80; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 38px; cursor: pointer; border: 4px solid #5d4037; position: relative; box-shadow: 0 5px 0 #211513; -webkit-tap-highlight-color: transparent; }
-        #menuScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; color: white; padding: 20px 0; }
-        #ad-middle-container { width: 320px; height: 100px; background: #000; margin: 20px 0; display: none; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0; border: 1px solid #444; }
+        .meat:active { transform: translateY(2px); box-shadow: 0 2px 0 #211513; }
+
+        /* メニュー画面 */
+        #menuScreen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; z-index: 200; 
+            color: white; padding: 20px 0;
+        }
+
+        #ad-middle-container { width: 320px; height: 100px; background: #000; margin: 15px 0; display: none; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0; border: 1px solid #444; }
+
         #bigAdScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; justify-content: center; align-items: center; }
         .ad-frame-wrapper { width: 95%; height: 85%; position: relative; }
         .ad-close-btn { position: absolute; top: -15px; right: -15px; color: white; font-size: 32px; font-weight: bold; cursor: pointer; background: rgba(0,0,0,0.7); width: 44px; height: 44px; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 3100; border: 2px solid white; }
-        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 12px; }
-        .menu-btn { padding: 15px 0; font-size: 20px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; width: 240px; text-align: center; text-decoration: none; }
+
+        /* --- ✨ ボタンの見た目を修正 --- */
+        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; margin-top: 10px; }
+        
+        .menu-btn { 
+            display: block; width: 220px; padding: 15px 0; font-size: 18px; 
+            border: none; border-radius: 50px; color: white !important; 
+            font-weight: bold; cursor: pointer; text-align: center; 
+            text-decoration: none !important; transition: 0.2s;
+        }
+
         #goButton { background: #e64a19; box-shadow: 0 4px #bf360c; }
-        #goButton:disabled { background: #555; box-shadow: 0 4px #333; color: #888; cursor: default; }
+        #goButton:disabled { background: #555; box-shadow: 0 4px #333; color: #888 !important; }
+
+        /* 「他のゲームはこちら」を前のデザインに復活 */
         .link-btn { background: #9b59b6; box-shadow: 0 4px #8e44ad; }
+        .link-btn:active { transform: translateY(2px); box-shadow: 0 2px #8e44ad; }
     </style>
 </head>
 <body>
 
-    <div id="ad-top"><iframe id="frame-top" src="ad.html"></iframe></div>
+    <div id="ad-top"><iframe id="frame-top" src="ad.html?pos=top"></iframe></div>
 
     <div id="game-outer">
         <div id="ui">SCORE: 0</div>
         <div id="game-grid"></div>
 
         <div id="menuScreen">
-            <h1 id="menuTitle" style="color:#ff5722; margin: 0; font-size: 32px;">SPEEDY BBQ</h1>
-            <p id="menuDesc" style="text-align:center; font-size: 15px; margin: 10px 0;">生（🤮）や焦げ（💣）は終了！</p>
-            <p style="margin: 5px 0; color:#ffab91; font-weight: bold; font-size: 20px;">BEST: <span id="best-ui">0</span></p>
+            <h1 id="menuTitle" style="color:#ff5722; margin: 0; font-size: 30px;">SPEEDY BBQ</h1>
+            <p id="menuDesc" style="text-align:center; font-size: 14px; margin: 8px 0;">生（🤮）や焦げ（💣）は終了！</p>
+            <p style="margin: 5px 0; color:#ffab91; font-weight: bold; font-size: 18px;">BEST: <span id="best-ui">0</span></p>
 
             <div id="ad-middle-container">
                 <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
             </div>
 
             <div class="btn-group">
-                <button id="goButton" onclick="startGame()">焼きはじめる！</button>
-                <a href="https://saaaachi.github.io/" class="link-btn">他のゲームはこちら</a>
+                <button id="goButton" class="menu-btn" onclick="startGame()">焼きはじめる！</button>
+                <a href="https://saaaachi.github.io/" class="menu-btn link-btn">他のゲームはこちら</a>
             </div>
         </div>
 
@@ -58,10 +88,10 @@
         </div>
     </div>
 
-    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html"></iframe></div>
+    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html?pos=bottom"></iframe></div>
 
     <script>
-        /* --- ゲームロジック --- */
+        // --- ゲームロジックは変更なし ---
         const grid = document.getElementById("game-grid");
         const ui = document.getElementById("ui");
         const bestUi = document.getElementById("best-ui");
@@ -162,18 +192,16 @@
             goButton.innerText = "リトライ！";
         }
 
-        /* --- ✨ 強化版：広告リフレッシュ (上下別タイミング) --- */
-        // 上広告リフレッシュ (30秒おき)
+        // --- 広告リフレッシュ (交互) ---
         setInterval(() => {
             const f = document.getElementById("frame-top");
-            if(f) { f.src = "ad.html?pos=top&t=" + Date.now(); }
+            if(f) f.src = "ad.html?pos=top&t=" + Date.now();
         }, 30000);
 
-        // 下広告リフレッシュ (30秒おき、上から15秒ズラす)
         setTimeout(() => {
             setInterval(() => {
                 const f = document.getElementById("frame-bottom");
-                if(f) { f.src = "ad.html?pos=bottom&t=" + Date.now(); }
+                if(f) f.src = "ad.html?pos=bottom&t=" + Date.now();
             }, 30000);
         }, 15000);
     </script>
