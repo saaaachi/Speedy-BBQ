@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Speedy BBQ - v25.8</title>
+    <title>Speedy BBQ - v25.9</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; overflow: hidden; background: #3e2723; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
         
+        /* 上下広告枠 (150px) */
         #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
         #ad-top { top: 0; border-bottom: 1px solid #444; } 
         #ad-bottom { bottom: 0; border-top: 1px solid #444; }
@@ -19,11 +20,19 @@
         #game-grid { flex-grow: 1; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; padding: 5px; }
 
         .meat { width: 85px; height: 85px; margin: 6px; background: #ff8a80; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 38px; cursor: pointer; border: 4px solid #5d4037; position: relative; box-shadow: 0 5px 0 #211513; -webkit-tap-highlight-color: transparent; }
+        .meat:active { transform: translateY(2px); box-shadow: 0 2px 0 #211513; }
 
+        /* メニュー・リザルト画面 */
         #menuScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; color: white; padding: 20px 0; }
-        #ad-middle-container { width: 320px; height: 100px; background: #000; margin: 15px 0; display: none; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0; border: 1px solid #444; }
+        
+        /* 中サイズ広告コンテナ（ガード用の設定を追加） */
+        #ad-middle-container { 
+            width: 320px; height: 100px; background: #000; margin: 15px 0; 
+            display: none; justify-content: center; align-items: center; 
+            overflow: hidden; flex-shrink: 0; border: 1px solid #444;
+            transition: opacity 0.3s; /* ふわっと表示用 */
+        }
 
-        /* --- ✨ ボタンデザインを完全復刻 --- */
         .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; margin-top: 10px; }
         .menu-btn { 
             display: flex; align-items: center; justify-content: center;
@@ -43,39 +52,160 @@
     </style>
 </head>
 <body>
+
     <div id="ad-top"><iframe id="frame-top" src="./ad.html?pos=top"></iframe></div>
+
     <div id="game-outer">
         <div id="ui">SCORE: 0</div>
         <div id="game-grid"></div>
+
         <div id="menuScreen">
             <h1 id="menuTitle" style="color:#ff5722; margin: 0; font-size: 32px;">SPEEDY BBQ</h1>
             <p id="menuDesc" style="text-align:center; font-size: 15px; margin: 10px 0;">生（🤮）や焦げ（💣）は終了！</p>
             <p style="margin: 5px 0; color:#ffab91; font-weight: bold; font-size: 20px;">BEST: <span id="best-ui">0</span></p>
-            <div id="ad-middle-container"><script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script></div>
+
+            <div id="ad-middle-container">
+                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
+            </div>
+
             <div class="btn-group">
                 <button id="goButton" class="menu-btn" onclick="startGame()">焼きはじめる！</button>
                 <a href="https://saaaachi.github.io/" class="menu-btn link-btn">他のゲームはこちら</a>
             </div>
         </div>
-        <div id="bigAdScreen"><div class="ad-frame-wrapper"><div id="ad-close-btn" class="ad-close-btn" onclick="closeBigAd()">×</div><iframe id="ad-large-frame" src="" style="width:100%; height:100%;"></iframe></div></div>
+
+        <div id="bigAdScreen">
+            <div class="ad-frame-wrapper">
+                <div id="ad-close-btn" class="ad-close-btn" onclick="closeBigAd()">×</div>
+                <iframe id="ad-large-frame" src="" style="width:100%; height:100%;"></iframe>
+            </div>
+        </div>
     </div>
+
     <div id="ad-bottom"><iframe id="frame-bottom" src="./ad.html?pos=bottom"></iframe></div>
 
     <script>
-        const grid = document.getElementById("game-grid"), ui = document.getElementById("ui"), bestUi = document.getElementById("best-ui"), menuScreen = document.getElementById("menuScreen"), adMid = document.getElementById("ad-middle-container"), goButton = document.getElementById("goButton");
+        const grid = document.getElementById("game-grid");
+        const ui = document.getElementById("ui");
+        const bestUi = document.getElementById("best-ui");
+        const menuScreen = document.getElementById("menuScreen");
+        const adMid = document.getElementById("ad-middle-container");
+        const goButton = document.getElementById("goButton");
+
         let score = 0, bestScore = localStorage.getItem("bbq_best") || 0, gameActive = false, playCount = 0;
         bestUi.innerText = bestScore;
 
-        function startGame() { menuScreen.style.display = "none"; adMid.style.display = "none"; gameActive = true; score = 0; ui.innerText = "SCORE: 0"; initGrid(); }
-        function initGrid() { grid.innerHTML = ""; for(let i=0; i<9; i++) { const m = document.createElement("div"); m.className = "meat"; m.onpointerdown = (e) => { e.preventDefault(); cook(m); }; grid.appendChild(m); startCooking(m); } }
-        function startCooking(m) { if(!gameActive) return; m.state = "raw"; m.innerText = "🥩"; m.style.background = "#ff8a80"; let timeToMedium = (1500 + Math.random() * 2000 - Math.min(score * 10, 1000)) + (50 + Math.random() * 50); m.timer = setTimeout(() => { if(!gameActive) return; m.state = "medium"; m.innerText = "🍖"; m.style.background = "#8d6e63"; let mediumDuration = Math.max(700, 2000 - (score * 15)) + (1000 + Math.random() * 200); m.timer = setTimeout(() => { if(!gameActive) return; gameOver("焦げちゃった！🔥"); }, mediumDuration); }, timeToMedium); }
-        function cook(m) { if(!gameActive) return; if(m.state === "medium") { score++; ui.innerText = "SCORE: " + score; clearTimeout(m.timer); m.innerText = "😋"; m.style.background = "#fff3e0"; setTimeout(() => { if(gameActive) startCooking(m); }, 300); } else if(m.state === "raw") { gameOver("まだ生だよ！🤮"); } }
-        function gameOver(msg) { gameActive = false; playCount++; if(score > bestScore) { bestScore = score; localStorage.setItem("bbq_best", bestScore); bestUi.innerText = bestScore; } document.getElementById("menuTitle").innerText = "GAME OVER"; document.getElementById("menuDesc").innerText = msg + " スコア: " + score; goButton.innerText = "お待ちください..."; goButton.disabled = true; adMid.style.display = "flex"; menuScreen.style.display = "flex"; if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) { setTimeout(showBigAd, 500); } else { setTimeout(() => { goButton.disabled = false; goButton.innerText = "リトライ！"; }, 1500); } }
-        function showBigAd() { const screen = document.getElementById("bigAdScreen"), closeBtn = document.getElementById("ad-close-btn"), frame = document.getElementById("ad-large-frame"); frame.src = "./ad.large.html?t=" + Date.now(); screen.style.display = "flex"; closeBtn.style.display = "none"; setTimeout(() => { closeBtn.style.display = "flex"; }, 5000); }
-        function closeBigAd() { document.getElementById("bigAdScreen").style.display = "none"; document.getElementById("ad-large-frame").src = ""; goButton.disabled = false; goButton.innerText = "リトライ！"; }
+        function startGame() {
+            menuScreen.style.display = "none";
+            adMid.style.display = "none";
+            gameActive = true;
+            score = 0; ui.innerText = "SCORE: 0";
+            initGrid();
+        }
 
-        setInterval(() => { const f = document.getElementById("frame-top"); if(f) f.src = "./ad.html?pos=top&t=" + Date.now(); }, 30000);
-        setTimeout(() => { setInterval(() => { const f = document.getElementById("frame-bottom"); if(f) f.src = "./ad.html?pos=bottom&t=" + Date.now(); }, 30000); }, 15000);
+        function initGrid() {
+            grid.innerHTML = "";
+            for(let i=0; i<9; i++) {
+                const m = document.createElement("div");
+                m.className = "meat";
+                m.onpointerdown = (e) => { e.preventDefault(); cook(m); };
+                grid.appendChild(m);
+                startCooking(m);
+            }
+        }
+
+        function startCooking(m) {
+            if(!gameActive) return;
+            m.state = "raw"; m.innerText = "🥩"; m.style.background = "#ff8a80";
+            let timeToMedium = (1500 + Math.random() * 2000 - Math.min(score * 10, 1000)) + (50 + Math.random() * 50);
+            m.timer = setTimeout(() => {
+                if(!gameActive) return;
+                m.state = "medium"; m.innerText = "🍖"; m.style.background = "#8d6e63";
+                let mediumDuration = Math.max(700, 2000 - (score * 15)) + (1000 + Math.random() * 200);
+                m.timer = setTimeout(() => {
+                    if(!gameActive) return;
+                    gameOver("焦げちゃった！🔥");
+                }, mediumDuration);
+            }, timeToMedium);
+        }
+
+        function cook(m) {
+            if(!gameActive) return;
+            if(m.state === "medium") {
+                score++; ui.innerText = "SCORE: " + score;
+                clearTimeout(m.timer);
+                m.innerText = "😋"; m.style.background = "#fff3e0";
+                setTimeout(() => { if(gameActive) startCooking(m); }, 300);
+            } else if(m.state === "raw") {
+                gameOver("まだ生だよ！🤮");
+            }
+        }
+
+        function gameOver(msg) {
+            gameActive = false;
+            playCount++;
+            if(score > bestScore) {
+                bestScore = score;
+                localStorage.setItem("bbq_best", bestScore);
+                bestUi.innerText = bestScore;
+            }
+            document.getElementById("menuTitle").innerText = "GAME OVER";
+            document.getElementById("menuDesc").innerText = msg + " スコア: " + score;
+            
+            // --- ✨ 誤タップ防止ガード発動 ---
+            goButton.innerText = "お待ちください...";
+            goButton.disabled = true;
+            
+            adMid.style.display = "flex"; 
+            adMid.style.pointerEvents = "none"; // タップ無効
+            adMid.style.opacity = "0.4";       // 少し薄くする
+            
+            menuScreen.style.display = "flex";
+            menuScreen.scrollTop = 0;
+
+            // 1.2秒後にガード解除
+            setTimeout(() => {
+                adMid.style.pointerEvents = "auto"; // タップ可能に
+                adMid.style.opacity = "1";          // 明るさを戻す
+                goButton.disabled = false;
+                goButton.innerText = "リトライ！";
+            }, 1200);
+
+            // 大広告判定
+            if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) {
+                setTimeout(showBigAd, 500);
+            }
+        }
+
+        function showBigAd() {
+            const screen = document.getElementById("bigAdScreen");
+            const closeBtn = document.getElementById("ad-close-btn");
+            const frame = document.getElementById("ad-large-frame");
+            frame.src = "./ad.large.html?t=" + Date.now();
+            screen.style.display = "flex";
+            closeBtn.style.display = "none";
+            setTimeout(() => { closeBtn.style.display = "flex"; }, 5000);
+        }
+
+        function closeBigAd() {
+            document.getElementById("bigAdScreen").style.display = "none";
+            document.getElementById("ad-large-frame").src = "";
+            goButton.disabled = false;
+            goButton.innerText = "リトライ！";
+        }
+
+        // 広告リフレッシュ (交互30秒)
+        setInterval(() => {
+            const f = document.getElementById("frame-top");
+            if(f) f.src = "./ad.html?pos=top&t=" + Date.now();
+        }, 30000);
+
+        setTimeout(() => {
+            setInterval(() => {
+                const f = document.getElementById("frame-bottom");
+                if(f) f.src = "./ad.html?pos=bottom&t=" + Date.now();
+            }, 30000);
+        }, 15000);
     </script>
 </body>
 </html>
