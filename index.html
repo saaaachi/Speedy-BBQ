@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Speedy BBQ - v25.9</title>
+    <title>Speedy BBQ - v26.1</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; overflow: hidden; background: #3e2723; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
@@ -25,12 +25,12 @@
         /* メニュー・リザルト画面 */
         #menuScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; color: white; padding: 20px 0; }
         
-        /* 中サイズ広告コンテナ（ガード用の設定を追加） */
+        /* 中サイズ広告コンテナ（i-mobile & ガード設定） */
         #ad-middle-container { 
             width: 320px; height: 100px; background: #000; margin: 15px 0; 
             display: none; justify-content: center; align-items: center; 
             overflow: hidden; flex-shrink: 0; border: 1px solid #444;
-            transition: opacity 0.3s; /* ふわっと表示用 */
+            transition: opacity 0.3s;
         }
 
         .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; margin-top: 10px; }
@@ -43,9 +43,9 @@
         #goButton { background: #e64a19; box-shadow: 0 5px #bf360c; }
         .link-btn { background: #9b59b6; box-shadow: 0 5px #8e44ad; }
         .menu-btn:active { transform: translateY(3px); box-shadow: none; }
-        #goButton:disabled { background: #555; box-shadow: none; color: #888 !important; }
+        #goButton:disabled { background: #555; box-shadow: none; color: #888 !important; cursor: default; }
 
-        /* 大広告用 */
+        /* 大広告用（親側で×ボタンを制御） */
         #bigAdScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; justify-content: center; align-items: center; }
         .ad-frame-wrapper { width: 95%; height: 85%; position: relative; }
         .ad-close-btn { position: absolute; top: -15px; right: -15px; color: white; font-size: 32px; font-weight: bold; cursor: pointer; background: rgba(0,0,0,0.7); width: 44px; height: 44px; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 3100; border: 2px solid white; }
@@ -65,7 +65,10 @@
             <p style="margin: 5px 0; color:#ffab91; font-weight: bold; font-size: 20px;">BEST: <span id="best-ui">0</span></p>
 
             <div id="ad-middle-container">
-                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
+                <div id="im-8b492cea6667490da71c488bdcc7cfc8">
+                    <script async src="https://imp-adedge.i-mobile.co.jp/script/v1/spot.js?20220104"></script>
+                    <script>(window.adsbyimobile=window.adsbyimobile||[]).push({pid:84561,mid:590804,asid:1924211,type:"banner",display:"inline",elementid:"im-8b492cea6667490da71c488bdcc7cfc8"})</script>
+                </div>
             </div>
 
             <div class="btn-group">
@@ -77,7 +80,7 @@
         <div id="bigAdScreen">
             <div class="ad-frame-wrapper">
                 <div id="ad-close-btn" class="ad-close-btn" onclick="closeBigAd()">×</div>
-                <iframe id="ad-large-frame" src="" style="width:100%; height:100%;"></iframe>
+                <iframe id="ad-large-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
             </div>
         </div>
     </div>
@@ -152,24 +155,23 @@
             document.getElementById("menuTitle").innerText = "GAME OVER";
             document.getElementById("menuDesc").innerText = msg + " スコア: " + score;
             
-            // --- ✨ 誤タップ防止ガード発動 ---
+            // --- ✨ 誤タップ防止ガード発動 (1.5秒) ---
             goButton.innerText = "お待ちください...";
             goButton.disabled = true;
             
             adMid.style.display = "flex"; 
-            adMid.style.pointerEvents = "none"; // タップ無効
-            adMid.style.opacity = "0.4";       // 少し薄くする
+            adMid.style.pointerEvents = "none"; 
+            adMid.style.opacity = "0.4";
             
             menuScreen.style.display = "flex";
             menuScreen.scrollTop = 0;
 
-            // 1.2秒後にガード解除
             setTimeout(() => {
-                adMid.style.pointerEvents = "auto"; // タップ可能に
-                adMid.style.opacity = "1";          // 明るさを戻す
+                adMid.style.pointerEvents = "auto"; 
+                adMid.style.opacity = "1";
                 goButton.disabled = false;
                 goButton.innerText = "リトライ！";
-            }, 1200);
+            }, 1500);
 
             // 大広告判定
             if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) {
@@ -184,14 +186,13 @@
             frame.src = "./ad.large.html?t=" + Date.now();
             screen.style.display = "flex";
             closeBtn.style.display = "none";
-            setTimeout(() => { closeBtn.style.display = "flex"; }, 5000);
+            setTimeout(() => { closeBtn.style.display = "flex"; }, 5000); // 5秒後に×ボタン
         }
 
         function closeBigAd() {
             document.getElementById("bigAdScreen").style.display = "none";
             document.getElementById("ad-large-frame").src = "";
-            goButton.disabled = false;
-            goButton.innerText = "リトライ！";
+            // ここで無理にgoButton.disabledを戻さない（ガード側のsetTimeoutに任せる）
         }
 
         // 広告リフレッシュ (交互30秒)
