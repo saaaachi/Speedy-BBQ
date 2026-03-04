@@ -195,12 +195,6 @@
             // ここで無理にgoButton.disabledを戻さない（ガード側のsetTimeoutに任せる）
         }
 
-        // 広告リフレッシュ (交互30秒)
-        setInterval(() => {
-            const f = document.getElementById("frame-top");
-            if(f) f.src = "./ad.html?pos=top&t=" + Date.now();
-        }, 30000);
-
         setTimeout(() => {
             setInterval(() => {
                 const f = document.getElementById("frame-bottom");
